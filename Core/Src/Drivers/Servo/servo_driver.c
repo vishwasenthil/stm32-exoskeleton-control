@@ -36,9 +36,14 @@ void move_to_angle(actuator_t* actuator, const int8_t angle) {
 
 void actuator_set_level(actuator_t* actuator, orientation_t* orientation) {
 	const uint32_t arr = actuator->htim->Init.Period;
-	pulse = ((arr / 90.0f) * fabsf(orientation->pitch));
 
-	float alpha = 0.93;
+	if(fabsf(orientation->pitch) < 5.0f) { // Handle sensor offset near 0 degrees
+		pulse = 0.0f;
+	} else {
+		pulse = ((arr / 90.0f) * fabsf(orientation->pitch));
+	}
+
+	float alpha = 0.85;
 	filtered_pulse = alpha * prev_filtered + (1 - alpha) * pulse;
 	prev_filtered = filtered_pulse;
 

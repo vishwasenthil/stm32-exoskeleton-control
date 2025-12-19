@@ -15,6 +15,10 @@ static void handle_error(HAL_StatusTypeDef status);
 static accel_t wrist_accel;
 static orientation_t wrist_orientation;
 static actuator_t assist_actuator;
+
+float execution_time;
+float total_latency;
+
 /**
   * @brief  The application entry point.
   * @retval int
@@ -34,14 +38,22 @@ int main(void)
 
   actuator_init(&assist_actuator, &htim2, TIM_CHANNEL_1);
 
-  int len;
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+  uint32_t start, end;
+  uint32_t total_cycles;
 
   while(1) {
 	uint8_t i2c_buffer[6];
+	MEASURE_START();
 	if(ADXL_Read(&hi2c1, i2c_buffer, &wrist_accel)) {
 		calculate_orientation(&wrist_accel, &wrist_orientation);
 		actuator_set_level(&assist_actuator, &wrist_orientation);
-		log_telemetry(&wrist_orientation);
+		MEASURE_END(execution_time);
+		MEASURE_LATENCY();
+		//log_telemetry(&wrist_orientation);
 		HAL_Delay(10);
 	} else {
 
@@ -68,6 +80,31 @@ static void handle_error(HAL_StatusTypeDef status) {
 	char err_msg[32];
 	int len = sprintf(err_msg, "Error: %d\r\n", (int) status);
 	UART_Transmit((uint8_t*) err_msg, len);
+}
+
+void measure_latency() {
+
+	static uint32_t latency_start, latency_end;
+	static bool movement_detected = false;
+	static bool ready_for_test = true;
+
+	if(ready_for_test && !movement_detected && pulse > (filtered_pulse + 100)) {
+		latency_start = DWT->CYCCNT;
+		movement_detected = true;
+		ready_for_test = false;
+	}
+
+	if(movement_detected && filtered_pulse >= (pulse * 0.9f)){
+		latency_end = DWT->CYCCNT;
+
+		total_latency = (latency_end - latency_start) / 16000.0f;
+
+		movement_detected = false;
+	}
+
+	if(!movement_detected && pulse < 20) {
+		ready_for_test = true;
+	}
 }
 
 

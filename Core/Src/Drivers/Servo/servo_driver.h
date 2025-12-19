@@ -1,6 +1,9 @@
 #include "adxl345_driver.h"
 #include "orientation.h"
 
+extern volatile float pulse;
+extern volatile float filtered_pulse;
+
 typedef struct {
 	TIM_HandleTypeDef* htim;
 	uint32_t channel;
