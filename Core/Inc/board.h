@@ -8,6 +8,8 @@
 	#define PWM_FREQ 50
 #endif
 
+#define CONTROL_LOOP_FREQ 200
+
 extern UART_HandleTypeDef huart2;
 extern TIM_HandleTypeDef htim2;
 extern TIM_OC_InitTypeDef sConfig;

@@ -57,6 +57,7 @@
 /* External variables --------------------------------------------------------*/
 
 /* USER CODE BEGIN EV */
+extern TIM_HandleTypeDef htim3;
 
 /* USER CODE END EV */
 
@@ -199,5 +200,9 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /* USER CODE BEGIN 1 */
+
+void TIM3_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&htim3);
+}
 
 /* USER CODE END 1 */

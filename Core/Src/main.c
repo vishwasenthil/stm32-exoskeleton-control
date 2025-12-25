@@ -9,15 +9,18 @@
 
 /* Private function prototypes -----------------------------------------------*/
 static void UART_Transmit(uint8_t* buffer, int len);
-static void log_telemetry(orientation_t* orientation);
+static void log_telemetry(orientation_t* orientation, accel_t* accel);
 static void handle_error(HAL_StatusTypeDef status);
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 
-static accel_t wrist_accel;
-static orientation_t wrist_orientation;
+volatile static accel_t wrist_accel;
+volatile static orientation_t wrist_orientation;
 static actuator_t assist_actuator;
 
-float execution_time;
+volatile float execution_time;
 float total_latency;
+
+volatile bool sensor_error_flag = false;
 
 /**
   * @brief  The application entry point.
@@ -46,22 +49,19 @@ int main(void)
   uint32_t total_cycles;
 
   while(1) {
-	uint8_t i2c_buffer[6];
-	MEASURE_START();
-	if(ADXL_Read(&hi2c1, i2c_buffer, &wrist_accel)) {
-		calculate_orientation(&wrist_accel, &wrist_orientation);
-		actuator_set_level(&assist_actuator, &wrist_orientation);
-		MEASURE_END(execution_time);
-		MEASURE_LATENCY();
-		//log_telemetry(&wrist_orientation);
-		HAL_Delay(10);
-	} else {
-
+	if(sensor_error_flag) {
 		handle_error(HAL_ERROR);
-		UART_Transmit((uint8_t *) "Sensor Error\r\n", 14);
 		HAL_Delay(100);
+	} else {
+		MEASURE_LATENCY();
+		log_telemetry(&wrist_orientation, &wrist_accel);
+		HAL_Delay(10);
 
-
+		uint32_t cnt = TIM3->CNT;
+		char buf[32];
+		int len = sprintf(buf, "CNT=%lu\r\n", cnt);
+		UART_Transmit((uint8_t*)buf, len);
+		HAL_Delay(100); // 10Hz print
 	}
   }
 }
@@ -70,9 +70,9 @@ static void UART_Transmit(uint8_t* buffer, int len) {
 	HAL_UART_Transmit(&huart2, buffer, len, 100);
 }
 
-static void log_telemetry(orientation_t* orientation) {
+static void log_telemetry(orientation_t* orientation, accel_t* accel) {
 	char log_buf[32];
-	int len = sprintf(log_buf, "P: %d\r\n", orientation->pitch);
+	int len = sprintf(log_buf, "P: %d\r\n", accel->data_x);
 	UART_Transmit((uint8_t*) log_buf, len);
 }
 
@@ -104,6 +104,21 @@ void measure_latency() {
 
 	if(!movement_detected && pulse < 20) {
 		ready_for_test = true;
+	}
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if(htim->Instance == TIM3) {
+		uint8_t i2c_buffer[6];
+		MEASURE_START();
+		if(ADXL_Read(&hi2c1, i2c_buffer, &wrist_accel)) {
+			sensor_error_flag = false;
+			calculate_orientation(&wrist_accel, &wrist_orientation);
+			actuator_set_level(&assist_actuator, &wrist_orientation);
+			MEASURE_END(execution_time);
+		} else {
+			sensor_error_flag = true;
+		}
 	}
 }
 

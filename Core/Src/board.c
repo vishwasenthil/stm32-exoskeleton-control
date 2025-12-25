@@ -17,6 +17,7 @@ void Board_Init(void) {
 	SystemClock_Config();
 	GPIO_Init();
 	UART_Init();
+	HAL_TIM_Base_DeInit(&htim3);
 	TIM_Init();
 	HAL_I2C_DeInit(&hi2c1);
 	I2C_Init();
@@ -90,6 +91,8 @@ static void UART_Init(void) {
 
 static void TIM_Init(void) {
 	__HAL_RCC_TIM2_CLK_ENABLE();
+	__HAL_RCC_TIM3_CLK_ENABLE();
+
 	htim2.Instance = TIM2;
 	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim2.Init.Period = (2000000 / PWM_FREQ) - 1;
@@ -102,7 +105,16 @@ static void TIM_Init(void) {
 	sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
 	HAL_TIM_PWM_ConfigChannel(&htim2, &sConfig, TIM_CHANNEL_1);
 
+	htim3.Instance = TIM3;
+	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim3.Init.Period = (2000000 / CONTROL_LOOP_FREQ) - 1;
+	htim3.Init.Prescaler = 7;
+	HAL_TIM_Base_Init(&htim3);
+
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+	HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(TIM3_IRQn);
+	HAL_TIM_Base_Start_IT(&htim3);
 }
 
 static void GPIO_Init(void)
