@@ -104,6 +104,7 @@ static void TIM_Init(void) {
 	sConfig.Pulse = 999;
 	sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
 	HAL_TIM_PWM_ConfigChannel(&htim2, &sConfig, TIM_CHANNEL_1);
+	HAL_TIM_PWM_ConfigChannel(&htim2, &sConfig, TIM_CHANNEL_2);
 
 	htim3.Instance = TIM3;
 	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -112,6 +113,7 @@ static void TIM_Init(void) {
 	HAL_TIM_Base_Init(&htim3);
 
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 	HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(TIM3_IRQn);
 	HAL_TIM_Base_Start_IT(&htim3);
@@ -121,6 +123,7 @@ static void GPIO_Init(void)
 {
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
 
     GPIO_InitTypeDef GPIO_InitStruct = {0};
 
@@ -146,12 +149,19 @@ static void GPIO_Init(void)
 	GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
 	HAL_GPIO_Init(I2C_SCL_Port, &GPIO_InitStruct);
 
-	GPIO_InitStruct.Pin = TIM2_CH1_Pin;
+	GPIO_InitStruct.Pin = TIM2_CH1_Pin | TIM2_CH2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
 	HAL_GPIO_Init(TIM2_CH1_Port, &GPIO_InitStruct);
+	HAL_GPIO_Init(TIM2_CH2_Port, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = R_EN_GPIO_Pin | L_EN_GPIO_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(R_EN_GPIO_Port, &GPIO_InitStruct);
 
 }
 

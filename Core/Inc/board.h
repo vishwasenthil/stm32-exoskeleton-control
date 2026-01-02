@@ -1,11 +1,9 @@
 #include "stm32f4xx_hal.h"
 
-#define HARDWARE_MODE_LED
-
 #ifdef HARDWARE_MODE_LED
 	#define PWM_FREQ 1000
 #else
-	#define PWM_FREQ 50
+	#define PWM_FREQ 8000
 #endif
 
 #define CONTROL_LOOP_FREQ 200

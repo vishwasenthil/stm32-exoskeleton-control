@@ -51,6 +51,12 @@ void Error_Handler(void);
 #define I2C_SDA_Pin GPIO_PIN_7
 #define TIM2_CH1_Port GPIOA
 #define TIM2_CH1_Pin GPIO_PIN_0
+#define TIM2_CH2_Port GPIOA
+#define TIM2_CH2_Pin GPIO_PIN_1
+#define R_EN_GPIO_Port GPIOC
+#define R_EN_GPIO_Pin GPIO_PIN_8
+#define L_EN_GPIO_Port GPIOC
+#define L_EN_GPIO_Pin GPIO_PIN_6
 
 #define TIMING_ENABLED 1
 
@@ -67,5 +73,7 @@ void Error_Handler(void);
 #ifdef __cplusplus
 }
 #endif
+
+void UART_Transmit(uint8_t* buffer, int len);
 
 #endif /* __MAIN_H */
