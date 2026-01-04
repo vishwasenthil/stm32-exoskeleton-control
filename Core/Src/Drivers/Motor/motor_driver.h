@@ -8,7 +8,7 @@ typedef struct {
 	TIM_HandleTypeDef* htim;
 	uint32_t duty_cycle;
 
-	uint32_t last_position;
+	float last_position;
 } motor_t;
 
 #define PITCH_THRESHOLD 0

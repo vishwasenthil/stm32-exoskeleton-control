@@ -76,4 +76,6 @@ void Error_Handler(void);
 
 void UART_Transmit(uint8_t* buffer, int len);
 
+extern last_position;
+
 #endif /* __MAIN_H */

@@ -15,14 +15,15 @@ static void handle_error(HAL_StatusTypeDef status);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 void measure_latency(void);
 
-volatile static accel_t wrist_accel;
-volatile static orientation_t wrist_orientation;
+static accel_t wrist_accel;
+static orientation_t wrist_orientation;
 static motor_t assist_actuator;
 
-volatile float execution_time;
-float total_latency;
+volatile static bool wrist_data_ready = false;
+bool sensor_error_flag = false;
 
-volatile bool sensor_error_flag = false;
+float execution_time;
+float total_latency;
 
 /**
   * @brief  The application entry point.
@@ -53,6 +54,21 @@ int main(void)
   uint32_t total_cycles;
 
   while(1) {
+	  if(wrist_data_ready) {
+		  wrist_data_ready = false;
+		  uint8_t i2c_buffer[6];
+		  MEASURE_START();
+		  if(ADXL_Read(&hi2c1, i2c_buffer, &wrist_accel)) {
+			  sensor_error_flag = false;
+			  calculate_orientation(&wrist_accel, &wrist_orientation);
+			  motor_move(&assist_actuator, &wrist_orientation);
+			  //actuator_set_level(&assist_actuator, &wrist_orientation);
+			  MEASURE_END(execution_time);
+		  } else {
+			  sensor_error_flag = true;
+		  }
+	  }
+
 	if(sensor_error_flag) {
 		handle_error(HAL_ERROR);
 		HAL_Delay(100);
@@ -112,17 +128,7 @@ void measure_latency(void) {
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if(htim->Instance == TIM3) {
-		uint8_t i2c_buffer[6];
-		MEASURE_START();
-		if(ADXL_Read(&hi2c1, i2c_buffer, &wrist_accel)) {
-			sensor_error_flag = false;
-			calculate_orientation(&wrist_accel, &wrist_orientation);
-			motor_move(&assist_actuator, &wrist_orientation);
-			//actuator_set_level(&assist_actuator, &wrist_orientation);
-			MEASURE_END(execution_time);
-		} else {
-			sensor_error_flag = true;
-		}
+		wrist_data_ready = true;
 	}
 }
 

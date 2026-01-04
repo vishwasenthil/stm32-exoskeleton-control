@@ -4,7 +4,7 @@
 #include "orientation.h"
 #include "motor_driver.h"
 
-#define PWM_SAFETY_DUTY_CYCLE 0.1
+#define PWM_SAFETY_DUTY_CYCLE 0.3
 
 void calculate_duty_cycle(motor_t* motor, orientation_t* orientation);
 

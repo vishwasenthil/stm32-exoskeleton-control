@@ -37,12 +37,16 @@ void motor_move(motor_t* motor, orientation_t* orientation) {
 		return;
 	}
 
+	uint32_t target = orientation->pitch;
+	uint32_t current = motor->last_position;
+	float step = 3;
+
 	calculate_duty_cycle(motor, orientation);
 	if(motor->last_position > orientation->pitch) {
 		move_counterclockwise(motor);
+		motor->last_position -= step;
 	} else {
 		move_clockwise(motor);
+		motor->last_position += step;
 	}
-
-	motor->last_position = orientation->pitch;
 }
