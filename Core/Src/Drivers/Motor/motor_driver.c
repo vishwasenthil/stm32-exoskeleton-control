@@ -3,8 +3,18 @@
 #include "main.h"
 #include <math.h>
 
-void motor_init(motor_t* motor, TIM_HandleTypeDef* htim) {
+void motor_init(motor_t* motor, TIM_HandleTypeDef* htim, joint_type_t joint_type) {
 	motor->htim = htim;
+	motor->joint_type = joint_type;
+
+	switch(joint_type) {
+	case ARM_RIGHT:
+		motor->direction_multiplier = 1;
+		break;
+	case ARM_LEFT:
+		motor->direction_multiplier = -1;
+		break;
+	}
 }
 
 static bool position_changed(motor_t* motor, orientation_t* orientation) {
@@ -37,16 +47,24 @@ void motor_move(motor_t* motor, orientation_t* orientation) {
 		return;
 	}
 
-	uint32_t target = orientation->pitch;
-	uint32_t current = motor->last_position;
+	float target = orientation->pitch;
+	float current = motor->last_position;
+	float error = target - current;
+
 	float step = 3;
 
 	calculate_duty_cycle(motor, orientation);
-	if(motor->last_position > orientation->pitch) {
+
+	if(error * motor->direction_multiplier < 0) {
+		move_clockwise(motor);
+	} else {
 		move_counterclockwise(motor);
+	}
+
+	if(error < 0) {
 		motor->last_position -= step;
 	} else {
-		move_clockwise(motor);
 		motor->last_position += step;
 	}
 }
+

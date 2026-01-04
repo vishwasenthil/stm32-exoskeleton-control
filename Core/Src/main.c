@@ -42,7 +42,7 @@ int main(void)
 	  handle_error(status);
   }
 
-  motor_init(&assist_actuator, &htim2);
+  motor_init(&assist_actuator, &htim2, ARM_RIGHT);
 
   //actuator_init(&assist_actuator, &htim2, TIM_CHANNEL_1);
 
