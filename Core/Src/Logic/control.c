@@ -1,9 +1,14 @@
 #include "control.h"
 #include <math.h>
 
-void calculate_duty_cycle(motor_t* motor, orientation_t* orientation) {
-	float pitch_change = orientation->pitch - motor->last_position;
+static const float Kp = 1.0f;
 
-	float duty_cycle = fabsf(((pitch_change) / 90.0f)) * 249.0f * PWM_SAFETY_DUTY_CYCLE;
-	motor->duty_cycle = duty_cycle;
+float calculate_control(motor_t* motor, float error) {
+	float control = Kp * error;
+	return control;
+}
+
+float counts_to_angle(int16_t counts) {
+	float angle = counts * DEGREES_PER_ENCODER_COUNT;
+	return angle;
 }

@@ -46,9 +46,9 @@ void Error_Handler(void);
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
 #define I2C_SCL_Port GPIOB
-#define I2C_SCL_Pin GPIO_PIN_6
+#define I2C_SCL_Pin GPIO_PIN_8
 #define I2C_SDA_Port GPIOB
-#define I2C_SDA_Pin GPIO_PIN_7
+#define I2C_SDA_Pin GPIO_PIN_9
 #define TIM2_CH1_Port GPIOA
 #define TIM2_CH1_Pin GPIO_PIN_0
 #define TIM2_CH2_Port GPIOA
@@ -57,6 +57,10 @@ void Error_Handler(void);
 #define R_EN_GPIO_Pin GPIO_PIN_8
 #define L_EN_GPIO_Port GPIOC
 #define L_EN_GPIO_Pin GPIO_PIN_6
+#define ENCODER_CH1_Pin GPIO_PIN_6
+#define ENCODER_CH1_Port GPIOB
+#define ENCODER_CH2_Pin GPIO_PIN_7
+#define ENCODER_CH2_Port GPIOB
 
 #define TIMING_ENABLED 1
 

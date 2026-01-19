@@ -10,18 +10,24 @@ typedef enum {
 } joint_type_t;
 
 typedef struct {
-	TIM_HandleTypeDef* htim;
-	uint32_t duty_cycle;
+	TIM_HandleTypeDef* pwm_htim;
+	TIM_HandleTypeDef* encoder_htim;
 
-	float last_position;
+	uint32_t pwm_max;
+	float control_max;
 
 	joint_type_t joint_type;
 	int8_t direction_multiplier;
+
+	bool simulation_mode;
 } motor_t;
 
 #define PITCH_THRESHOLD 0
+#define PWM_SAFETY_DUTY_CYCLE 0.3 * 249
 
-void motor_init(motor_t* motor, TIM_HandleTypeDef* htim, joint_type_t joint_type);
+
+
+void motor_init(motor_t* motor, TIM_HandleTypeDef* pwm_htim,TIM_HandleTypeDef* encoder_htim, joint_type_t joint_type);
 void motor_move(motor_t* motor, orientation_t* orientation);
 
 #endif

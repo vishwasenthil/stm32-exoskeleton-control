@@ -19,11 +19,13 @@ static accel_t wrist_accel;
 static orientation_t wrist_orientation;
 static motor_t assist_actuator;
 
-volatile static bool wrist_data_ready = false;
+static volatile bool wrist_data_ready = false;
 bool sensor_error_flag = false;
 
 float execution_time;
 float total_latency;
+
+static int state;
 
 /**
   * @brief  The application entry point.
@@ -42,7 +44,7 @@ int main(void)
 	  handle_error(status);
   }
 
-  motor_init(&assist_actuator, &htim2, ARM_RIGHT);
+  motor_init(&assist_actuator, &htim2, &htim4, ARM_RIGHT);
 
   //actuator_init(&assist_actuator, &htim2, TIM_CHANNEL_1);
 
@@ -62,6 +64,12 @@ int main(void)
 			  sensor_error_flag = false;
 			  calculate_orientation(&wrist_accel, &wrist_orientation);
 			  motor_move(&assist_actuator, &wrist_orientation);
+
+			  char buf[20];
+			  state = HAL_GPIO_ReadPin(ENCODER_CH1_Port, ENCODER_CH1_Pin);
+			  int len = sprintf(buf, "Pin State: %d", state);
+			  UART_Transmit((uint8_t*) buf, len);
+
 			  //actuator_set_level(&assist_actuator, &wrist_orientation);
 			  MEASURE_END(execution_time);
 		  } else {
@@ -77,10 +85,12 @@ int main(void)
 		log_telemetry(&wrist_orientation, &wrist_accel);
 		HAL_Delay(10);
 
+		/*
 		char buf[32];
 		int duty = sprintf(buf, "Duty Cycle=%d\r\n", assist_actuator.duty_cycle);
 		UART_Transmit((uint8_t*)buf, duty);
 		HAL_Delay(100); // 10Hz print
+		*/
 	}
   }
 }

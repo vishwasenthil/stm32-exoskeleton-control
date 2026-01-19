@@ -5,7 +5,9 @@
 UART_HandleTypeDef huart2 = {0};
 TIM_HandleTypeDef htim2 = {0};
 TIM_HandleTypeDef htim3 = {0};
-TIM_OC_InitTypeDef sConfig = {0};
+TIM_HandleTypeDef htim4 ={0};
+TIM_OC_InitTypeDef ocConfig = {0};
+TIM_Encoder_InitTypeDef encoderConfig = {0};
 I2C_HandleTypeDef hi2c1 = {0};
 
 static void UART_Init();
@@ -92,6 +94,7 @@ static void UART_Init(void) {
 static void TIM_Init(void) {
 	__HAL_RCC_TIM2_CLK_ENABLE();
 	__HAL_RCC_TIM3_CLK_ENABLE();
+	__HAL_RCC_TIM4_CLK_ENABLE();
 
 	htim2.Instance = TIM2;
 	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -100,11 +103,11 @@ static void TIM_Init(void) {
 	htim2.Init.Prescaler = 7;
 	HAL_TIM_PWM_Init(&htim2);
 
-	sConfig.OCMode = TIM_OCMODE_PWM1;
-	sConfig.Pulse = 999;
-	sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
-	HAL_TIM_PWM_ConfigChannel(&htim2, &sConfig, TIM_CHANNEL_1);
-	HAL_TIM_PWM_ConfigChannel(&htim2, &sConfig, TIM_CHANNEL_2);
+	ocConfig.OCMode = TIM_OCMODE_PWM1;
+	ocConfig.Pulse = 999;
+	ocConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+	HAL_TIM_PWM_ConfigChannel(&htim2, &ocConfig, TIM_CHANNEL_1);
+	HAL_TIM_PWM_ConfigChannel(&htim2, &ocConfig, TIM_CHANNEL_2);
 
 	htim3.Instance = TIM3;
 	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -112,11 +115,29 @@ static void TIM_Init(void) {
 	htim3.Init.Prescaler = 7;
 	HAL_TIM_Base_Init(&htim3);
 
+	htim4.Instance = TIM4;
+	htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim4.Init.Period = 0xFFFF;
+
+	encoderConfig.EncoderMode = TIM_ENCODERMODE_TI12;
+	encoderConfig.IC1Polarity = TIM_ICPOLARITY_BOTHEDGE;
+	encoderConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+	encoderConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+	encoderConfig.IC1Filter = 0;
+
+	encoderConfig.IC2Polarity = TIM_ICPOLARITY_BOTHEDGE;
+	encoderConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+	encoderConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+	encoderConfig.IC2Filter = 0;
+	HAL_TIM_Encoder_Init(&htim4, &encoderConfig);
+
+
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 	HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(TIM3_IRQn);
 	HAL_TIM_Base_Start_IT(&htim3);
+	HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
 }
 
 static void GPIO_Init(void)
@@ -162,6 +183,14 @@ static void GPIO_Init(void)
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(R_EN_GPIO_Port, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = ENCODER_CH1_Pin | ENCODER_CH2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
+	HAL_GPIO_Init(ENCODER_CH1_Port, &GPIO_InitStruct);
+
 
 }
 

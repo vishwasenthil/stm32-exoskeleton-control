@@ -4,8 +4,10 @@
 #include "orientation.h"
 #include "motor_driver.h"
 
-#define PWM_SAFETY_DUTY_CYCLE 0.3
+#define ENCODER_COUNTS_PER_REV 64
+#define DEGREES_PER_ENCODER_COUNT 360.0f / ENCODER_COUNTS_PER_REV
 
-void calculate_duty_cycle(motor_t* motor, orientation_t* orientation);
+float calculate_control(motor_t* motor, float error);
+float counts_to_angle(int16_t counts);
 
 #endif
