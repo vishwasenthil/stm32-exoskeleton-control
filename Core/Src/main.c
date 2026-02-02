@@ -26,6 +26,7 @@ float execution_time;
 float total_latency;
 
 static int state;
+static int state2;
 
 /**
   * @brief  The application entry point.
@@ -44,11 +45,11 @@ int main(void)
 	  handle_error(status);
   }
 
-  motor_init(&assist_actuator, &htim2, &htim4, ARM_RIGHT);
+  motor_init(&assist_actuator, &htim2, &htim4);
 
   //actuator_init(&assist_actuator, &htim2, TIM_CHANNEL_1);
 
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  CoreDebug->DEMCR  |= CoreDebug_DEMCR_TRCENA_Msk;
   DWT->CYCCNT = 0;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
@@ -67,6 +68,7 @@ int main(void)
 
 			  char buf[20];
 			  state = HAL_GPIO_ReadPin(ENCODER_CH1_Port, ENCODER_CH1_Pin);
+			  state2 = HAL_GPIO_ReadPin(ENCODER_CH2_Port, ENCODER_CH2_Pin);
 			  int len = sprintf(buf, "Pin State: %d", state);
 			  UART_Transmit((uint8_t*) buf, len);
 

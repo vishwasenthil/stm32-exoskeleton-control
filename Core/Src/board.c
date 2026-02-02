@@ -120,15 +120,15 @@ static void TIM_Init(void) {
 	htim4.Init.Period = 0xFFFF;
 
 	encoderConfig.EncoderMode = TIM_ENCODERMODE_TI12;
-	encoderConfig.IC1Polarity = TIM_ICPOLARITY_BOTHEDGE;
+	encoderConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
 	encoderConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
 	encoderConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-	encoderConfig.IC1Filter = 0;
+	encoderConfig.IC1Filter = 0x8;
 
-	encoderConfig.IC2Polarity = TIM_ICPOLARITY_BOTHEDGE;
+	encoderConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
 	encoderConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
 	encoderConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-	encoderConfig.IC2Filter = 0;
+	encoderConfig.IC2Filter = 0x8;
 	HAL_TIM_Encoder_Init(&htim4, &encoderConfig);
 
 

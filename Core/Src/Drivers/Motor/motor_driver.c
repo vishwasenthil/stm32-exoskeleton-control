@@ -5,23 +5,19 @@
 
 static volatile float measured_position;
 static uint16_t position;
+static uint32_t duty_cycle;
 
-void motor_init(motor_t* motor, TIM_HandleTypeDef* pwm_htim,TIM_HandleTypeDef* encoder_htim, joint_type_t joint_type) {
+static bool assist_active = false;
+
+void motor_init(motor_t* motor, TIM_HandleTypeDef* pwm_htim,TIM_HandleTypeDef* encoder_htim) {
 	motor->pwm_htim = pwm_htim;
-	motor->encoder_htim = encoder_htim;
-	motor->joint_type = joint_type;
+	motor->encoder_htim = encoder_htim;;
+	motor->min_pwm = 150;
 
 	motor->pwm_max = __HAL_TIM_GET_AUTORELOAD(motor->pwm_htim);
 	motor->control_max = 90.0f;
 
-	switch(joint_type) {
-	case ARM_RIGHT:
-		motor->direction_multiplier = 1;
-		break;
-	case ARM_LEFT:
-		motor->direction_multiplier = -1;
-		break;
-	}
+	motor->direction_multiplier = 1;
 }
 
 /*
@@ -64,9 +60,35 @@ void motor_move(motor_t* motor, orientation_t* orientation) {
 
 	measured_position = read_encoder(motor);
 
-	uint32_t duty_cycle = 0.3 * 249;
+	/*
+	uint32_t duty_cycle = 0.1 * 249;
 
 	move_clockwise(motor, duty_cycle);
+	*/
+
+
+	float target = orientation->pitch;
+	float current = measured_position;
+	float error = target - current;
+
+	float control = calculate_control(motor, error);
+
+	duty_cycle = (fabs(control)) * motor->pwm_max * PWM_SAFETY_DUTY_CYCLE;
+
+	if(fabs(control) > 0.1f) {
+		if(duty_cycle < motor->min_pwm) {
+			duty_cycle = motor->min_pwm;
+		}
+		else if(duty_cycle > motor->pwm_max) {
+			duty_cycle = motor->pwm_max;
+		}
+	}
+
+	if(control < 0.0f) {
+		move_counterclockwise(motor, duty_cycle);
+	} else {
+		move_clockwise(motor, duty_cycle);
+	}
 
 	/*
 	float target = orientation->pitch;
