@@ -10,7 +10,7 @@
 
 #define DEGREES_PER_ENCODER_COUNT 360.0f / (ENCODER_COUNTS_PER_REV)
 
-float calculate_control(motor_t* motor, float error);
+float calculate_control(motor_t* motor, orientation_t* orientation);
 float counts_to_angle(int16_t counts);
 
 #endif

@@ -64,7 +64,7 @@ int main(void)
 		  if(ADXL_Read(&hi2c1, i2c_buffer, &wrist_accel)) {
 			  sensor_error_flag = false;
 			  calculate_orientation(&wrist_accel, &wrist_orientation);
-			  motor_move(&assist_actuator, &wrist_orientation);
+			  calculate_control(&assist_actuator, &wrist_orientation);
 
 			  char buf[20];
 			  state = HAL_GPIO_ReadPin(ENCODER_CH1_Port, ENCODER_CH1_Pin);

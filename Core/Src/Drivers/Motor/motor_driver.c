@@ -47,7 +47,7 @@ static void move_counterclockwise(motor_t* motor, uint32_t duty_cycle) {
 
 }
 
-static float read_encoder(motor_t* motor) {
+float read_encoder(motor_t* motor) {
 	position = __HAL_TIM_GET_COUNTER(motor->encoder_htim);
 
 	float angle = counts_to_angle(position);
@@ -56,34 +56,11 @@ static float read_encoder(motor_t* motor) {
 
 }
 
-void motor_move(motor_t* motor, orientation_t* orientation) {
-
-	measured_position = read_encoder(motor);
-
-	/*
-	uint32_t duty_cycle = 0.1 * 249;
-
-	move_clockwise(motor, duty_cycle);
-	*/
-
-
-	float target = orientation->pitch;
-	float current = measured_position;
-	float error = target - current;
-
-	float control = calculate_control(motor, error);
+void motor_set_control(motor_t* motor, float control) {
 
 	duty_cycle = (fabs(control)) * motor->pwm_max * PWM_SAFETY_DUTY_CYCLE;
 
-	if(fabs(control) > 0.1f) {
-		if(duty_cycle < motor->min_pwm) {
-			duty_cycle = motor->min_pwm;
-		}
-		else if(duty_cycle > motor->pwm_max) {
-			duty_cycle = motor->pwm_max;
-		}
-	}
-
+	// TODO: Move to control
 	if(control < 0.0f) {
 		move_counterclockwise(motor, duty_cycle);
 	} else {

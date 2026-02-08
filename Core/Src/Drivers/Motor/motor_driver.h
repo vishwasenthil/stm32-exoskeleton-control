@@ -14,7 +14,11 @@ typedef struct {
 
 	int8_t direction_multiplier;
 
-	bool simulation_mode;
+	uint32_t start_time;
+	uint32_t end_time;
+	bool is_kicking;
+	bool is_idle;
+	bool is_tracking;
 } motor_t;
 
 #define PITCH_THRESHOLD 0
@@ -23,6 +27,7 @@ typedef struct {
 
 
 void motor_init(motor_t* motor, TIM_HandleTypeDef* pwm_htim,TIM_HandleTypeDef* encoder_htim);
+float read_encoder(motor_t* motor);
 void motor_move(motor_t* motor, orientation_t* orientation);
 
 #endif
