@@ -12,7 +12,6 @@ static bool assist_active = false;
 void motor_init(motor_t* motor, TIM_HandleTypeDef* pwm_htim,TIM_HandleTypeDef* encoder_htim) {
 	motor->pwm_htim = pwm_htim;
 	motor->encoder_htim = encoder_htim;;
-	motor->min_pwm = 150;
 
 	motor->pwm_max = __HAL_TIM_GET_AUTORELOAD(motor->pwm_htim);
 	motor->control_max = 90.0f;
@@ -58,7 +57,11 @@ float read_encoder(motor_t* motor) {
 
 void motor_set_control(motor_t* motor, float control) {
 
-	duty_cycle = (fabs(control)) * motor->pwm_max * PWM_SAFETY_DUTY_CYCLE;
+	duty_cycle = (fabsf(control)) * motor->pwm_max * PWM_SAFETY_DUTY_CYCLE;
+
+	if(duty_cycle > motor->pwm_htim->Init.Period) {
+		duty_cycle = 150;
+	}
 
 	// TODO: Move to control
 	if(control < 0.0f) {
@@ -66,6 +69,7 @@ void motor_set_control(motor_t* motor, float control) {
 	} else {
 		move_clockwise(motor, duty_cycle);
 	}
+
 
 	/*
 	float target = orientation->pitch;
