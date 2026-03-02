@@ -61,6 +61,12 @@ void Error_Handler(void);
 #define ENCODER_CH1_Port GPIOB
 #define ENCODER_CH2_Pin GPIO_PIN_7
 #define ENCODER_CH2_Port GPIOB
+#define ADC_RIGHT_I_SENSE_Port GPIOA
+#define ADC_RIGHT_I_SENSE_Pin GPIO_PIN_4
+#define ADC_LEFT_I_SENSE_Port GPIOA
+#define ADC_LEFT_I_SENSE_Pin GPIO_PIN_5
+#define ADC_CHANNEL_R_IS 4
+#define ADC_CHANNEL_L_IS 5
 
 #define TIMING_ENABLED 1
 

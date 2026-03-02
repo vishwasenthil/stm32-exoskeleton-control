@@ -13,7 +13,6 @@ static const float Kp = 0.05f;
 
 float last_pitch;
 float last_encoder;
-float current;
 float error;
 float control = 0.0f;
 
@@ -27,7 +26,7 @@ bool motor_stalled(float current_encoder, float last_encoder, float current_pitc
 void calculate_control(motor_t* motor, orientation_t* orientation) {
 
 	float target = orientation->pitch;
-	current = read_encoder(motor);
+	float current = read_encoder(motor);
 	error = (target - current);
 
 	if(fabsf(error) < ERROR_DEADBAND) {

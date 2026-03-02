@@ -7,23 +7,28 @@ TIM_HandleTypeDef htim2 = {0};
 TIM_HandleTypeDef htim3 = {0};
 TIM_HandleTypeDef htim4 ={0};
 TIM_OC_InitTypeDef ocConfig = {0};
+TIM_OC_InitTypeDef halfOCConfig = {0};
 TIM_Encoder_InitTypeDef encoderConfig = {0};
 I2C_HandleTypeDef hi2c1 = {0};
+ADC_HandleTypeDef hadc1 = {0};
+ADC_ChannelConfTypeDef adcConfig_R = {0};
+ADC_ChannelConfTypeDef adcConfig_L = {0};
 
 static void UART_Init();
 static void TIM_Init();
 static void GPIO_Init();
 static void I2C_Init();
+static void ADC_Init();
 
 void Board_Init(void) {
 	SystemClock_Config();
 	GPIO_Init();
 	UART_Init();
 	HAL_TIM_Base_DeInit(&htim3);
+	ADC_Init();
 	TIM_Init();
 	HAL_I2C_DeInit(&hi2c1);
 	I2C_Init();
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 }
 
 /**
@@ -106,8 +111,13 @@ static void TIM_Init(void) {
 	ocConfig.OCMode = TIM_OCMODE_PWM1;
 	ocConfig.Pulse = 999;
 	ocConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+
+	halfOCConfig.OCMode = TIM_OCMODE_PWM1;
+	halfOCConfig.Pulse = ocConfig.Pulse / 2;
+	halfOCConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
 	HAL_TIM_PWM_ConfigChannel(&htim2, &ocConfig, TIM_CHANNEL_1);
 	HAL_TIM_PWM_ConfigChannel(&htim2, &ocConfig, TIM_CHANNEL_2);
+	HAL_TIM_PWM_ConfigChannel(&htim2, &halfOCConfig, TIM_CHANNEL_3);
 
 	htim3.Instance = TIM3;
 	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -131,13 +141,46 @@ static void TIM_Init(void) {
 	encoderConfig.IC2Filter = 0x8;
 	HAL_TIM_Encoder_Init(&htim4, &encoderConfig);
 
-
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 	HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(TIM3_IRQn);
 	HAL_TIM_Base_Start_IT(&htim3);
 	HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+}
+
+static void ADC_Init(void) {
+	__HAL_RCC_ADC1_CLK_ENABLE();
+
+	hadc1.Instance = ADC1;
+	hadc1.Init.ContinuousConvMode = DISABLE;
+	hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+	hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+	hadc1.Init.ScanConvMode = ENABLE;
+	hadc1.Init.ContinuousConvMode = DISABLE;
+	hadc1.Init.NbrOfConversion = 2;
+	hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_FALLING;
+	hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T2_CC3;
+	hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+	hadc1.Init.DiscontinuousConvMode = DISABLE;
+	hadc1.Init.DMAContinuousRequests = DISABLE;
+	hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+
+	adcConfig_R.Channel = ADC_CHANNEL_R_IS;
+	adcConfig_R.Rank = 1;
+	adcConfig_R.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+
+	adcConfig_L.Channel = ADC_CHANNEL_L_IS;
+	adcConfig_L.Rank = 2;
+	adcConfig_L.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+
+	HAL_ADC_Init(&hadc1);
+
+	HAL_ADC_ConfigChannel(&hadc1, &adcConfig_R);
+	HAL_ADC_ConfigChannel(&hadc1, &adcConfig_L);
+
+	HAL_ADC_Start(&hadc1);
 }
 
 static void GPIO_Init(void)
@@ -191,7 +234,10 @@ static void GPIO_Init(void)
 	GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
 	HAL_GPIO_Init(ENCODER_CH1_Port, &GPIO_InitStruct);
 
-
+	GPIO_InitStruct.Pin = ADC_RIGHT_I_SENSE_Pin | ADC_LEFT_I_SENSE_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(ADC_RIGHT_I_SENSE_Port, &GPIO_InitStruct);
 }
 
 static void I2C_Init(void) {

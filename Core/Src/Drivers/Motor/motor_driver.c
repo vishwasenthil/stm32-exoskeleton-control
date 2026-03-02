@@ -33,6 +33,7 @@ static void move_clockwise(motor_t* motor, uint32_t duty_cycle) {
 
 	__HAL_TIM_SET_COMPARE(timer, TIM_CHANNEL_1, duty_cycle);
 	__HAL_TIM_SET_COMPARE(timer, TIM_CHANNEL_2, 0);
+	__HAL_TIM_SET_COMPARE(timer, TIM_CHANNEL_3, duty_cycle / 2);
 }
 
 static void move_counterclockwise(motor_t* motor, uint32_t duty_cycle) {
@@ -43,7 +44,14 @@ static void move_counterclockwise(motor_t* motor, uint32_t duty_cycle) {
 
 	__HAL_TIM_SET_COMPARE(timer, TIM_CHANNEL_2, duty_cycle);
 	__HAL_TIM_SET_COMPARE(timer, TIM_CHANNEL_1, 0);
+	__HAL_TIM_SET_COMPARE(timer, TIM_CHANNEL_3, duty_cycle / 2);
 
+}
+
+uint16_t get_current_sense(ADC_HandleTypeDef* current_sense_adc) {
+	if(__HAL_ADC_GET_FLAG(current_sense_adc, ADC_FLAG_EOC)) {
+		return ADC1->DR;
+	}
 }
 
 float read_encoder(motor_t* motor) {
@@ -56,7 +64,6 @@ float read_encoder(motor_t* motor) {
 }
 
 void motor_set_control(motor_t* motor, float control) {
-
 	duty_cycle = (fabsf(control)) * motor->pwm_max * PWM_SAFETY_DUTY_CYCLE;
 
 	if(duty_cycle > motor->pwm_htim->Init.Period) {

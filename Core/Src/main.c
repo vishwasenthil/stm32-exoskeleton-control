@@ -28,6 +28,8 @@ float total_latency;
 static int state;
 static int state2;
 
+uint16_t current;
+
 /**
   * @brief  The application entry point.
   * @retval int
@@ -57,6 +59,7 @@ int main(void)
   uint32_t total_cycles;
 
   while(1) {
+	  current = get_current_sense(&hadc1);
 	  if(wrist_data_ready) {
 		  wrist_data_ready = false;
 		  uint8_t i2c_buffer[6];
