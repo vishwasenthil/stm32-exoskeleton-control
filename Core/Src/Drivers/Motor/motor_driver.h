@@ -18,6 +18,7 @@ typedef struct {
 	bool is_kicking;
 	bool is_idle;
 	bool is_tracking;
+	bool is_stalled;
 } motor_t;
 
 #define PITCH_THRESHOLD 0

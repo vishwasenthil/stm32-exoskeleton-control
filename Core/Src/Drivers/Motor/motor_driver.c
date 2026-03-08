@@ -4,10 +4,11 @@
 #include <math.h>
 
 static volatile float measured_position;
-static uint16_t position;
 static uint32_t duty_cycle;
 
 static bool assist_active = false;
+
+static uint16_t position;
 
 void motor_init(motor_t* motor, TIM_HandleTypeDef* pwm_htim,TIM_HandleTypeDef* encoder_htim) {
 	motor->pwm_htim = pwm_htim;
@@ -48,6 +49,14 @@ static void move_counterclockwise(motor_t* motor, uint32_t duty_cycle) {
 
 }
 
+static void stop_motor(motor_t* motor) {
+	TIM_HandleTypeDef* timer = motor->pwm_htim;
+
+	__HAL_TIM_SET_COMPARE(timer, TIM_CHANNEL_2, 0);
+	__HAL_TIM_SET_COMPARE(timer, TIM_CHANNEL_1, 0);
+	__HAL_TIM_SET_COMPARE(timer, TIM_CHANNEL_3, 0);
+}
+
 uint16_t get_current_sense(ADC_HandleTypeDef* current_sense_adc) {
 	if(__HAL_ADC_GET_FLAG(current_sense_adc, ADC_FLAG_EOC)) {
 		return ADC1->DR;
@@ -56,11 +65,7 @@ uint16_t get_current_sense(ADC_HandleTypeDef* current_sense_adc) {
 
 float read_encoder(motor_t* motor) {
 	position = __HAL_TIM_GET_COUNTER(motor->encoder_htim);
-
-	float angle = counts_to_angle(position);
-
-	return angle;
-
+	return position;
 }
 
 void motor_set_control(motor_t* motor, float control) {

@@ -1,5 +1,5 @@
 #include "control.h"
-#include "motor_driver.h";
+#include "motor_driver.h"
 #include <math.h>
 
 static const float Kp = 0.05f;
@@ -10,23 +10,39 @@ static const float Kp = 0.05f;
 #define MOVEMENT_DEADBAND 3.0f
 #define MOTOR_MOVING_THRESHOLD 2000
 #define ARM_MOVING_THRESHOLD 50
+#define MOTOR_STALL_CURRENT 7 // TODO: Change motor stall current
+
+static const float FOREARM_LENGTH = 0.3f;
+static const float PULLEY_RADIUS = 0.008f;
+static const float CABLE_PULLED_PER_REV = 2 * M_PI * PULLEY_RADIUS;
+static const float ANGLES_PER_REV = CABLE_PULLED_PER_REV / FOREARM_LENGTH;
+static const float ANGLES_PER_REV_DEGREES = ANGLES_PER_REV * (180.0f / M_PI);
 
 float last_pitch;
 float last_encoder;
 float error;
 float control = 0.0f;
 
-bool motor_stalled(float current_encoder, float last_encoder, float current_pitch, float last_pitch) {
-	float motor_vel = (current_encoder - last_encoder) / 0.005f;
-	float pitch_vel = (current_pitch - last_pitch) / 0.005f;
+// Debugging globals, change to static
+float current;
+float motor_rotations;
+float angle;
 
-	return fabs(motor_vel) > MOTOR_MOVING_THRESHOLD && fabs(pitch_vel) < ARM_MOVING_THRESHOLD; // If the motor shaft's moving but the arm's not moving, then the gearbox shaft is stuck
+static float counts_to_angle(int16_t counts);
+
+void motor_stalled(ADC_HandleTypeDef* current_sense_adc, motor_t* motor) {
+	uint16_t motor_current = get_current_sense(current_sense_adc);
+
+	if(motor_current > MOTOR_STALL_CURRENT) { // Change motor stall current
+		stop_motor(motor);
+		motor->is_stalled = true;
+	}
 }
 
 void calculate_control(motor_t* motor, orientation_t* orientation) {
 
 	float target = orientation->pitch;
-	float current = read_encoder(motor);
+	current = counts_to_angle(read_encoder(motor));
 	error = (target - current);
 
 	if(fabsf(error) < ERROR_DEADBAND) {
@@ -48,7 +64,9 @@ void calculate_control(motor_t* motor, orientation_t* orientation) {
 
 }
 
-float counts_to_angle(int16_t counts) {
-	float angle = counts * DEGREES_PER_ENCODER_COUNT;
+static float counts_to_angle(int16_t counts) {
+	// float angle = counts * DEGREES_PER_ENCODER_COUNT;
+	motor_rotations = (float) counts / ENCODER_COUNTS_PER_REV;
+	angle = motor_rotations * ANGLES_PER_REV_DEGREES;
 	return angle;
 }
