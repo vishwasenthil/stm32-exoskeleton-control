@@ -1,4 +1,3 @@
-#include "control.h"
 #include "motor_driver.h"
 #include <math.h>
 
@@ -12,25 +11,31 @@ static const float Kp = 0.05f;
 #define ARM_MOVING_THRESHOLD 50
 #define MOTOR_STALL_CURRENT 7 // TODO: Change motor stall current
 
+#define ENCODER_COUNTS_PER_REV 2797
+#define NUM_EDGES 4
+#define GEAR_RATIO 43.8f
+
+#define DEGREES_PER_ENCODER_COUNT 360.0f / (ENCODER_COUNTS_PER_REV)
+
 static const float FOREARM_LENGTH = 0.3f;
 static const float PULLEY_RADIUS = 0.008f;
 static const float CABLE_PULLED_PER_REV = 2 * M_PI * PULLEY_RADIUS;
 static const float ANGLES_PER_REV = CABLE_PULLED_PER_REV / FOREARM_LENGTH;
 static const float ANGLES_PER_REV_DEGREES = ANGLES_PER_REV * (180.0f / M_PI);
 
-float last_pitch;
-float last_encoder;
-float error;
-float control = 0.0f;
 
 // Debugging globals, change to static
+float error;
+float control = 0.0f;
 float current;
 float motor_rotations;
 float angle;
 
+static void motor_stalled(ADC_HandleTypeDef* current_sense_adc, motor_t* motor);
+void calculate_control(motor_t* motor, orientation_t* orientation);
 static float counts_to_angle(int16_t counts);
 
-void motor_stalled(ADC_HandleTypeDef* current_sense_adc, motor_t* motor) {
+static void motor_stalled(ADC_HandleTypeDef* current_sense_adc, motor_t* motor) {
 	uint16_t motor_current = get_current_sense(current_sense_adc);
 
 	if(motor_current > MOTOR_STALL_CURRENT) { // Change motor stall current
