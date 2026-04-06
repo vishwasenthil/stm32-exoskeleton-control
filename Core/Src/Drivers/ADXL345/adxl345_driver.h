@@ -18,7 +18,7 @@ typedef struct {
 } accel_t;
 
 HAL_StatusTypeDef ADXL_Init(I2C_HandleTypeDef* hi2c1);
-bool ADXL_Read(I2C_HandleTypeDef* hi2c1, uint8_t* data, accel_t* accel);
+bool ADXL_Read(I2C_HandleTypeDef* hi2c, accel_t* accel);
 bool ADXL_Write();
 
 #endif

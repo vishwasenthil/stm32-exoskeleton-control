@@ -16,25 +16,18 @@ HAL_StatusTypeDef ADXL_Init(I2C_HandleTypeDef* hi2c) {
 	return status;
 }
 
-bool ADXL_Read(I2C_HandleTypeDef* hi2c, uint8_t* data, accel_t* accel) {
+bool ADXL_Read(I2C_HandleTypeDef* hi2c, accel_t* accel) {
 
 	HAL_StatusTypeDef status;
+	uint8_t i2c_buffer[6];
 
-	status = HAL_I2C_Mem_Read(hi2c, DEVICE_ADDRESS << 1, DATAX0_ADDRESS, I2C_MEMADD_SIZE_8BIT, data, 6, 100);
+	status = HAL_I2C_Mem_Read(hi2c, DEVICE_ADDRESS << 1, DATAX0_ADDRESS, I2C_MEMADD_SIZE_8BIT, i2c_buffer, 6, 100);
 
 	if(status != HAL_OK) return false;
 
-	uint16_t x0 = *(data);
-	uint16_t x1 = *(data + 1);
-	uint16_t y0 = *(data + 2);
-	uint16_t y1 = *(data + 3);
-	uint16_t z0 = *(data + 4);
-	uint16_t z1 = *(data + 5);
-
-
-	accel->data_x = (x1 << 8) | x0;
-	accel->data_y = (y1 << 8) | y0;
-	accel->data_z = (z1 << 8) | z0;
+	accel->data_x = i2c_buffer[1] << 8 | i2c_buffer[0];
+	accel->data_y = i2c_buffer[3] << 8 | i2c_buffer[2];
+	accel->data_z = i2c_buffer[5] << 8 | i2c_buffer[4];
 
 	return true;
 }

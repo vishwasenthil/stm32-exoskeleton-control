@@ -1,7 +1,9 @@
 #include "motor_driver.h"
+#include "logger.h"
 #include <math.h>
 
-static const float Kp = 0.05f;
+static const float Kp = 0.41f;
+static const float Kd = 0.005f;
 
 #define INITIAL_KICK_POWER 0.3
 #define ERROR_DEADBAND 1.5f
@@ -26,10 +28,12 @@ static const float ANGLES_PER_REV_DEGREES = ANGLES_PER_REV * (180.0f / M_PI);
 
 // Debugging globals, change to static
 float error;
+float last_error;
 float control = 0.0f;
 float current;
 float motor_rotations;
 float angle;
+float target;
 
 static void motor_stalled(ADC_HandleTypeDef* current_sense_adc, motor_t* motor);
 void calculate_control(motor_t* motor, orientation_t* orientation);
@@ -44,17 +48,31 @@ static void motor_stalled(ADC_HandleTypeDef* current_sense_adc, motor_t* motor) 
 	}
 }
 
+float simulate_target() {
+	static float current_position = 0.0f;
+	float sim_target = 90.0f;
+	float degrees_per_second = 30.0f;
+	float ramp_step = degrees_per_second * 0.005;
+
+	if(current_position < sim_target) {
+		current_position += ramp_step;
+	}
+}
+
 void calculate_control(motor_t* motor, orientation_t* orientation) {
 
-	float target = orientation->pitch;
+	// float target = orientation->pitch;
+	target = simulate_target();
 	current = counts_to_angle(read_encoder(motor));
 	error = (target - current);
+
+	logger_trigger(target, current);
 
 	if(fabsf(error) < ERROR_DEADBAND) {
 		control = 0.0f;
 		motor->is_idle = true;
 	} else {
-		control = Kp * error;
+		control = (Kp * error) + (Kd * ((error - last_error) / 0.005)); // TODO: Get rid of magic number
 		motor->is_idle = false;
 	}
 
@@ -65,6 +83,7 @@ void calculate_control(motor_t* motor, orientation_t* orientation) {
 		control = 1.0f;
 	}
 
+	last_error = error;
 	motor_set_control(motor, control);
 
 }
