@@ -19,10 +19,12 @@ typedef struct {
 	bool is_idle;
 	bool is_tracking;
 	bool is_stalled;
+
+	uint16_t current_sense_reading;
 } motor_t;
 
 #define PITCH_THRESHOLD 0
-#define PWM_SAFETY_DUTY_CYCLE 0.7f
+#define PWM_SAFETY_DUTY_CYCLE 0.8f;
 
 
 

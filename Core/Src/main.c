@@ -19,6 +19,7 @@ static orientation_t wrist_orientation;
 static motor_t assist_actuator;
 
 static volatile bool wrist_data_ready = false;
+static volatile bool recover_from_stall = false;
 bool sensor_error_flag = false;
 
 float execution_time;
@@ -58,9 +59,10 @@ int main(void)
   logger_init(&huart2);
 
   while(1) {
-	  uint16_t current = get_current_sense(&hadc1);
 	  if(wrist_data_ready) {
 		  wrist_data_ready = false;
+		  uint16_t motor_current_reading = get_current_sense(&hadc1);
+		  assist_actuator.current_sense_reading = motor_current_reading;
 		  MEASURE_START();
 		  if(ADXL_Read(&hi2c1, &wrist_accel)) {
 			  sensor_error_flag = false;
@@ -119,7 +121,13 @@ void measure_latency(void) {
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if(htim->Instance == TIM3) {
-		wrist_data_ready = true;
+		if(assist_actuator.is_stalled) {
+			wrist_data_ready = false;
+			recover_from_stall = true;
+		} else {
+			recover_from_stall = false;
+			wrist_data_ready = true;
+		}
 	}
 }
 
